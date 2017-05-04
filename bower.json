@@ -1,0 +1,26 @@
+{
+  "name": "Inventory",
+  "homepage": "https://github.com/team4099/Inventory",
+  "authors": [
+    "Parth Oza <plusparth@gmail.com>"
+  ],
+  "description": "FRC Team 4099's inventory system to keep track of items",
+  "main": "main.py",
+  "keywords": [
+    "inventory",
+    "frc"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "boostrap#^3.3.7",
+    "jquery": "^3.2.1",
+    "bootswatch-dist": "flatly"
+  }
+}
