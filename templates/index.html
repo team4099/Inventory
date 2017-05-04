@@ -16,12 +16,13 @@
         <link rel="stylesheet" href="{{ url_for('bower.static', filename='bootswatch-dist/css/bootstrap.min.css') }}" >
 {#        <link rel="stylesheet" href="{{ url_for('bower.static', filename='bootstrap/dist/css/bootstrap-theme.min.css') }}" >#}
 
-        <link rel="stylesheet" href="{{ url_for('static', filename='static/css/jumbotron-narrow.css') }}" >
+{#        <link rel="stylesheet" href="{{ url_for('static', filename='static/css/jumbotron-narrow.css') }}" >#}
 
         <!-- CSS specific to this website -->
         <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
 
         <script src="{{ url_for('bower.static', filename='jquery/dist/jquery.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     </head>
     <body>
     <br />
@@ -65,7 +66,7 @@
                                 <th>Quantity</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="inventoryBody">
 
                         </tbody>
                     </table>
