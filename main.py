@@ -13,6 +13,7 @@ ITEM_DATA = "items.json"
 LOG_FILE = ".log"
 MAX_ITEMS = 10000
 
+@app.route("/search")
 def search(query: str):
     if query.startswith("#"):
         num = query[1:]
@@ -25,14 +26,16 @@ def search(query: str):
     else:
         return sorted(list(range(MAX_ITEMS)), key=lambda i: jaro_winkler(data[i][0], query), reverse=True)
 
-def add(code: int, name: str, quantity: int=1, description: str=""):
+@app.route("/add")
+def add(code: int, name: str, quantity: int=1, notes: str="", location: str="", purchase_link: str="", image_link: str=""):
     global data
-    data[code] = [name, quantity, description]
+    data[code] = [name, quantity, notes, location, purchase_link, image_link]
     with open(ITEM_DATA, "w") as file:
         json.dump(file)
     with open(LOG_FILE, "a") as log:
         log.write("Admin added " + str(quantity) + " of item #" + str(code) + " (" + name + ").")
 
+@app.route("/remove")
 def remove(code: int):
     global data
     with open(LOG_FILE, "a") as log:
@@ -41,12 +44,15 @@ def remove(code: int):
     with open(ITEM_DATA, "w") as file:
         json.dump(file)
 
+@app.route("/get_info")
 def get_info(code: int):
     return data[code]
 
+@app.route("/get_all")
 def get_all():
     return dumps(data)
 
+@app.route("/change_quantity")
 def change_quantity(code: int, amount: int, checkout: bool=True, user: str=None):
     global data
     if checkout:
@@ -61,6 +67,7 @@ def change_quantity(code: int, amount: int, checkout: bool=True, user: str=None)
         else:
             log.write("Quantity of item #" + str(code) + " (" + name + ") changed by " + "-" * checkout + str(quantity) + ".")
 
+@app.route("/log")
 def get_log():
     try:
         with open(LOG_FILE, "r") as log:
