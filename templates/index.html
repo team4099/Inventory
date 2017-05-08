@@ -42,9 +42,8 @@
                 <div id="navbar" class="navbar-collapse collapse">
                     <form class="navbar-form navbar-right">
                         <div class="form-group">
-                          <input type="text" class="form-control" placeholder="Search">
+                          <input id="search" type="text" class="form-control" onKeyUp="sendSearch()" placeholder="Search">
                         </div>
-                        <button type="submit" class="btn btn-default">Submit</button>
                     </form>
                     <ul class="nav navbar-nav navbar-right">
 
@@ -63,6 +62,7 @@
                                 <th>Item Code</th>
                                 <th>Name</th>
                                 <th>Location</th>
+                                <th>Stock Quantity</th>
                                 <th>Quantity</th>
                             </tr>
                         </thead>

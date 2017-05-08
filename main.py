@@ -3,54 +3,75 @@
 Inventory system for FRC Team 4099.
 """
 
-from flask import Flask, render_template, Response
-from flask.ext.bower import Bower
+from flask import Flask, render_template, request, Response
+from flask_bower import Bower
 from json import load, dump, dumps, decoder
 from jellyfish import jaro_winkler
 
 app = Flask(__name__)
+Bower(app)
+
 ITEM_DATA = "items.json"
-LOG_FILE = ".log"
+LOG_FILE = "log.log"
 MAX_ITEMS = 10000
 
-@app.route("/search")
-def search(query: str):
+
+@app.route("/search", methods=['GET'])
+def search():
+    query = request.args['query']
     if query.startswith("#"):
         num = query[1:]
         try:
             if int(num) > 9999:
-                return []
-            return [i for i in range(MAX_ITEMS) if str(i).startswith(num) or ("%04d" % str(i)).startswith(num)]
+                return [], 200
+            return [i for i in range(MAX_ITEMS) if str(i).startswith(num) or ("%04d" % str(i)).startswith(num)], 200
         except:
-            return []
+            return [], 200
     else:
-        return sorted(list(range(MAX_ITEMS)), key=lambda i: jaro_winkler(data[i][0], query), reverse=True)
+        return sorted(list(range(MAX_ITEMS)), key=lambda i: jaro_winkler(data[i][0], query), reverse=True), 200
 
-@app.route("/add")
-def add(code: int, name: str, quantity: int=1, notes: str="", location: str="", purchase_link: str="", image_link: str=""):
+
+@app.route("/add", methods=['POST'])
+def add():
     global data
+    for code, l in enumerate(data):
+        if l == 0:
+            break
+    name = request.form.get('name', '')
+    quantity = int(request.form.get('quantity', '1'))
+    notes = request.form.get('notes', '')
+    location = request.form.get('location', '')
+    purchase_link = request.form.get('purchase_link', '')
+    image_link = request.form.get('image_link', '')
     data[code] = [name, quantity, notes, location, purchase_link, image_link]
+    print(data[code])
     with open(ITEM_DATA, "w") as file:
-        dump(file)
+        dump(data, file)
     with open(LOG_FILE, "a") as log:
         log.write("Admin added " + str(quantity) + " of item #" + str(code) + " (" + name + ").")
+    return "", 200
 
-@app.route("/remove")
-def remove(code: int):
+
+@app.route("/remove", methods=['POST'])
+def remove():
     global data
+    code = int(request.form['code'])
     with open(LOG_FILE, "a") as log:
         log.write("Admin removed item #" + str(code) + " (" + data[code][0] + ").")
     data[code] = None
     with open(ITEM_DATA, "w") as file:
-        json.dump(file)
+        dump(data, file)
+
 
 @app.route("/get_info")
 def get_info(code: int):
     return data[code]
 
+
 @app.route("/get_all")
 def get_all():
     return dumps(data)
+
 
 @app.route("/change_quantity")
 def change_quantity(code: int, amount: int, checkout: bool=True, user: str=None):
@@ -60,12 +81,13 @@ def change_quantity(code: int, amount: int, checkout: bool=True, user: str=None)
     else:
         data[code] += amount
     with open(ITEM_DATA, "w") as file:
-        json.dump(file)
+        dump(data, file)
     with open(LOG_FILE, "a") as log:
-        if user != None:
-            log.write(user + " changed the quantity of item #" + str(code) + " (" + name + ") by " + "-" * checkout + str(quantity) + ".")
+        if user is None:
+            log.write(user + " changed the quantity of item #" + str(code) + " (" + data[code][0] + ") by " + "-" * checkout + str(data[code][1]) + ".")
         else:
-            log.write("Quantity of item #" + str(code) + " (" + name + ") changed by " + "-" * checkout + str(quantity) + ".")
+            log.write("Quantity of item #" + str(code) + " (" + data[code][0] + ") changed by " + "-" * checkout + str(data[code][1]) + ".")
+
 
 @app.route("/log")
 def get_log():
@@ -76,10 +98,6 @@ def get_log():
         open(LOG_FILE, "w").close()
         return ""
 
-@app.errorhandler(Exception)
-def all_exception_handler(error):
-    print(error)
-    return "-1", 500
 
 @app.route("/")
 def index():
