@@ -5,7 +5,7 @@ Inventory system for FRC Team 4099.
 
 from flask import Flask, render_template, Response
 from flask.ext.bower import Bower
-from json import load, dump, dumps
+from json import load, dump, dumps, decoder
 from jellyfish import jaro_winkler
 
 app = Flask(__name__)
@@ -31,7 +31,7 @@ def add(code: int, name: str, quantity: int=1, notes: str="", location: str="", 
     global data
     data[code] = [name, quantity, notes, location, purchase_link, image_link]
     with open(ITEM_DATA, "w") as file:
-        json.dump(file)
+        dump(file)
     with open(LOG_FILE, "a") as log:
         log.write("Admin added " + str(quantity) + " of item #" + str(code) + " (" + name + ").")
 
@@ -90,10 +90,10 @@ def index():
     return render_template("index.html")
 
 if __name__ == "__main__":
-    try:
-        with open(ITEM_DATA):
+    with open(ITEM_DATA) as file:
+        try:
             data = load(file)
-    except FileNotFoundError:
-        data = [0]*10000
-        open(ITEM_DATA, "w").close()
+        except decoder.JSONDecodeError:
+            data = [0]*10000
+            open(ITEM_DATA, "w").close()
     app.run("0.0.0.0", debug=True, port=8080, threaded=True)
