@@ -16,33 +16,36 @@ LOG_FILE = "log.log"
 MAX_ITEMS = 10000
 
 
-@app.route("/search", methods=['GET'])
+@app.route("/search", methods=["GET"])
 def search():
-    query = request.args['query']
-    if query.startswith("#"):
+    print("request.args:", request.args)
+    query = request.args.get("query")
+    print("query:", query)
+    if query.startswith("$"):
         num = query[1:]
         try:
             if int(num) > 9999:
                 return [], 200
-            return [i for i in range(MAX_ITEMS) if str(i).startswith(num) or ("%04d" % str(i)).startswith(num)], 200
+            return dumps([i for i in range(MAX_ITEMS) if str(i).startswith(num) or ("%04d" % str(i)).startswith(num)]), 200
         except:
-            return [], 200
+            return dumps([]), 200
     else:
-        return sorted(list(range(MAX_ITEMS)), key=lambda i: jaro_winkler(data[i][0], query), reverse=True), 200
+        return dumps(sorted(list(filter(lambda i: data[i], range(MAX_ITEMS))), key=lambda i: jaro_winkler(data[i][0], query),
+                      reverse=True)), 200
 
 
-@app.route("/add", methods=['POST'])
+@app.route("/add", methods=["POST"])
 def add():
     global data
     for code, l in enumerate(data):
         if l == 0:
             break
-    name = request.form.get('name', '')
-    quantity = int(request.form.get('quantity', '1'))
-    notes = request.form.get('notes', '')
-    location = request.form.get('location', '')
-    purchase_link = request.form.get('purchase_link', '')
-    image_link = request.form.get('image_link', '')
+    name = request.form.get("name", "")
+    quantity = int(request.form.get("quantity", "1"))
+    notes = request.form.get("notes", "")
+    location = request.form.get("location", "")
+    purchase_link = request.form.get("purchase_link", "")
+    image_link = request.form.get("image_link", "")
     data[code] = [name, quantity, notes, location, purchase_link, image_link]
     print(data[code])
     with open(ITEM_DATA, "w") as file:
@@ -52,30 +55,35 @@ def add():
     return "", 200
 
 
-@app.route("/remove", methods=['POST'])
+@app.route("/remove", methods=["POST"])
 def remove():
     global data
-    code = int(request.form['code'])
+    code = int(request.form["code"])
     with open(LOG_FILE, "a") as log:
         log.write("Admin removed item #" + str(code) + " (" + data[code][0] + ").")
     data[code] = None
     with open(ITEM_DATA, "w") as file:
         dump(data, file)
+    return "success", 200
 
 
 @app.route("/get_info")
 def get_info(code: int):
-    return data[code]
+    return dumps(data[code]), 200
 
 
 @app.route("/get_all")
 def get_all():
-    return dumps(data)
+    return dumps(data), 200
 
 
-@app.route("/change_quantity")
-def change_quantity(code: int, amount: int, checkout: bool=True, user: str=None):
+@app.route("/change_quantity", methods=["POST"])
+def change_quantity():
     global data
+    code = int(request.form['code'])
+    amount = int(request.form['amount'])
+    checkout = int(request.form['checkout']) != 0
+    user = request.form.get('user', "")
     if checkout:
         data[code] -= amount
     else:
@@ -87,16 +95,17 @@ def change_quantity(code: int, amount: int, checkout: bool=True, user: str=None)
             log.write(user + " changed the quantity of item #" + str(code) + " (" + data[code][0] + ") by " + "-" * checkout + str(data[code][1]) + ".")
         else:
             log.write("Quantity of item #" + str(code) + " (" + data[code][0] + ") changed by " + "-" * checkout + str(data[code][1]) + ".")
+    return "success", 200
 
 
 @app.route("/log")
 def get_log():
     try:
         with open(LOG_FILE, "r") as log:
-            return log.read()
+            return log.read(), 200
     except:
         open(LOG_FILE, "w").close()
-        return ""
+        return "", 404
 
 
 @app.route("/")
