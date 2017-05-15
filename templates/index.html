@@ -46,12 +46,28 @@
                         </div>
                     </form>
                     <ul class="nav navbar-nav navbar-right">
-
+                        <li><a href="javascript:viewCart()" target="_blank">View cart<span class="glyphicon glyphicon-shopping-cart"></span></a></li>
                     </ul>
                 </div><!--/.nav-collapse -->
             </div><!--/.container-fluid -->
         </nav>
-
+        <div class="modal" id="cart">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                      <h4 class="modal-title">Modal title</h4>
+                    </div>
+                    <div class="modal-body">
+                      <p>One fine body…</p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                      <button type="button" class="btn btn-primary">Save changes</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
         <div class="container-fluid">
             <div class="row">
                 <div class="table-responsive">
@@ -62,6 +78,7 @@
                                 <th>Item Code</th>
                                 <th>Name</th>
                                 <th>Location</th>
+                                <th>Notes</th>
                                 <th>Stock Quantity</th>
                                 <th>Quantity</th>
                             </tr>
