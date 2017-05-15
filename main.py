@@ -4,17 +4,24 @@ Inventory system for FRC Team 4099.
 """
 
 from flask import Flask, render_template, request, Response
+from flast.ext.session import Session
 from flask_bower import Bower
 from json import load, dump, dumps, decoder
 from jellyfish import jaro_winkler
 
 app = Flask(__name__)
 Bower(app)
+Session(app)
 
 ITEM_DATA = "items.json"
 LOG_FILE = "log.log"
 MAX_ITEMS = 10000
 
+@app.route("/login", methods=["POST"])
+def login():
+    passwd = request.args.get("passwd")
+    if passwd == "8d56e58b448bcda2cf79b94abb3451d7":
+        session["admin"] = True
 
 @app.route("/search", methods=["GET"])
 def search():
@@ -36,6 +43,8 @@ def search():
 
 @app.route("/add", methods=["POST"])
 def add():
+    if not session.get("admin", False):
+        return
     global data
     for code, l in enumerate(data):
         if l == 0:
@@ -57,6 +66,8 @@ def add():
 
 @app.route("/remove", methods=["POST"])
 def remove():
+    if not session.get("admin", False):
+        return
     global data
     code = int(request.form["code"])
     with open(LOG_FILE, "a") as log:
