@@ -52,13 +52,13 @@ def add():
         dump(data, file)
     with open(LOG_FILE, "a") as log:
         log.write("Admin added " + str(quantity) + " of item #" + str(code) + " (" + name + ").")
-    return "", 200
+    return dumps({"uuid": code}), 200
 
 
 @app.route("/remove", methods=["POST"])
 def remove():
     global data
-    code = int(request.form["code"])
+    code = int(request.form.get("code"))
     with open(LOG_FILE, "a") as log:
         log.write("Admin removed item #" + str(code) + " (" + data[code][0] + ").")
     data[code] = None
@@ -68,8 +68,9 @@ def remove():
 
 
 @app.route("/get_info")
-def get_info(code: int):
-    return dumps(data[code]), 200
+def get_info():
+    code = int(request.args.get("code"))
+    return dumps({"uuid": code, "data": data[code]}), 200
 
 
 @app.route("/get_all")
@@ -84,10 +85,12 @@ def change_quantity():
     amount = int(request.form['amount'])
     checkout = int(request.form['checkout']) != 0
     user = request.form.get('user', "")
+    print("code;", code)
+    print("data[code]:", data[code])
     if checkout:
-        data[code] -= amount
+        data[code][1] -= amount
     else:
-        data[code] += amount
+        data[code][1] += amount
     with open(ITEM_DATA, "w") as file:
         dump(data, file)
     with open(LOG_FILE, "a") as log:

@@ -46,28 +46,137 @@
                         </div>
                     </form>
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="javascript:viewCart()" target="_blank">View cart<span class="glyphicon glyphicon-shopping-cart"></span></a></li>
+                        <li><a href="javascript:viewCart()">View cart <span class="glyphicon glyphicon-shopping-cart"></span></a></li>
+                        <li><a href="javascript:checkInItemsModal()">Check in <span class="glyphicon glyphicon-log-in"></span></a></li>
+                        <li><a href="javascript:showAddItemsModal()">Add item <span class="glyphicon glyphicon-plus"></span></a></li>
                     </ul>
                 </div><!--/.nav-collapse -->
             </div><!--/.container-fluid -->
         </nav>
         <div class="modal" id="cart">
-                <div class="modal-dialog">
-                  <div class="modal-content">
+            <div class="modal-dialog">
+                <div class="modal-content">
                     <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                      <h4 class="modal-title">Modal title</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                        <h4 class="modal-title">Modal title</h4>
                     </div>
                     <div class="modal-body">
-                      <p>One fine body…</p>
+                        <p>One fine body…</p>
                     </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                      <button type="button" class="btn btn-primary">Save changes</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">Save changes</button>
                     </div>
-                  </div>
                 </div>
-              </div>
+            </div>
+        </div>
+        <div class="modal" id="addItem">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Add new item to inventory</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger" id="invalidItemsThing" style="display: none">
+                            <strong>Oh snap!</strong>
+                            <span id="addItemsError"></span>
+                        </div>
+                        <form class="form-horizontal">
+                            <label for="addItemName" class="control-label">Item Name</label>
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="addItemName" placeholder="Name">
+                            </div>
+                            <label for="currentQuantity" class="control-label">Current Quantity</label>
+                            <div class="form-group">
+                                <input type="number" class="form-control" id="currentQuantity" placeholder="Quantity" min="0">
+                            </div>
+                            <label for="location" class="control-label">Location</label>
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="location" placeholder="Location">
+                            </div>
+                            <label for="notes" class="control-label">Notes</label>
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="notes" placeholder="Notes">
+                            </div>
+                            <label for="buyLink" class="control-label">Purchase Link</label>
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="buyLink" placeholder="Purchase Link">
+                            </div>
+                            <label for="imageLink" class="control-label">Image Link</label>
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="imageLink" placeholder="Image Link">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="submitAddItem()">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal" id="checkIn">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Check in items</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger" id="invalidIdAlert" style="display: none">
+                            <strong>Oh snap!</strong> This ID is invalid.
+                        </div>
+                        <div class="alert alert-danger" id="noIdAlert" style="display: none">
+                            <strong>Oh snap!</strong> You must select an ID first.
+                        </div>
+                        <form class="form-horizontal">
+                            <label for="checkInItemId" class="control-label">Item ID</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="checkInItemId" placeholder="ID">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" type="button" onclick="retrieveCheckInData()">Retrieve</button>
+                                </span>
+                            </div>
+                        </form>
+                        <div class="panel panel-default" style="display: none;" id="checkInTable">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Check In Details</h3>
+                            </div>
+                            <table class="table">
+                                <tr>
+                                    <td><strong>ID</strong></td>
+                                    <td id="checkInItemFinalId"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Name</strong></td>
+                                    <td id="checkInItemName"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Location</strong></td>
+                                    <td id="checkInItemLocation"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Notes</strong></td>
+                                    <td id="checkInItemNotes"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Quantity</strong></td>
+                                    <td><input type="number" id="checkInQuantity" min="1"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>User</strong></td>
+                                    <td><input type="text" id="checkInUser"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="checkInItem()">Check in</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <span id="placeToPutIds"></span>
         <div class="container-fluid">
             <div class="row">
                 <div class="table-responsive">
