@@ -91,3 +91,5 @@ ENV/
 *.png
 
 bower_components/
+
+items.json
