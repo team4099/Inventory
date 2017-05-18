@@ -3,8 +3,8 @@
 Inventory system for FRC Team 4099.
 """
 
-from flask import Flask, render_template, request, Response
-from flast.ext.session import Session
+from flask import Flask, render_template, request, Response, session
+from flask_session import Session
 from flask_bower import Bower
 from json import load, dump, dumps, decoder
 from jellyfish import jaro_winkler
