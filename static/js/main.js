@@ -7,10 +7,20 @@ var cart = [];
 var DEFAULT_TR_CONTENTS = '<tr class="listRow" id="row{UUID}">' +
     '<td><div class="checkbox"><label><input type="checkbox" name="{UUID}" onchange="modifyCart(this.name, this.checked)" id="checkbox{UUID}"></label></div></td>' +
     '<td class="uuid" id="uuid{UUID}">{DISPLAYUUID}</td>' +
-    '<td class="name" id="name{UUID}">{NAME}</td><td class="location" id="location{UUID}">{LOCATION}</td>' +
+    '<td class="name" id="name{UUID}">{NAME}</td>' +
+    '<td class="location" id="location{UUID}">{LOCATION}</td>' +
     '<td class="notes" id="notes{UUID}">{NOTES}</td>' +
     '<td id="total{UUID}">{TOTAL}</td>' +
     '<td><input type="number" id="quantity{UUID}" name="quantity{UUID}" min="0" max="{TOTAL}" onkeyup="checkCheckbox({UUID})"></td>' +
+    '</tr>';
+
+var CART_TR_CONTENTS = '<tr id="cartRow{UUID}">' +
+    '<td id="cartUUID{UUID}">{DISPLAYUUID}</td>' +
+    '<td id="cartName{UUID}">{NAME}</td>' +
+    '<td id="cartLocation{UUID}">{LOCATION}</td>' +
+    '<td id="cartNotes{UUID}">{NOTES}</td>' +
+    '<td id="cartTotal{UUID}">{TOTAL}</td>' +
+    '<td id="cartQuantity{UUID}">{QUANTITY}</td>' +
     '</tr>';
 
 var SHOW_ID_CONTENTS = '<div class="alert alert-success">' +
@@ -29,6 +39,22 @@ function escapeRegExp(str) {
 
 function replaceAll(str, find, replace) {
     return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
+}
+
+function commonReplacements(replace, uuid, name, location, notes, total, quantity, from, in_out) {
+    var str = "" + uuid;
+    var pad = "0000";
+
+    replace = replaceAll(replace, "{DISPLAYUUID}", pad.substring(0, pad.length - str.length) + str);
+    replace = replaceAll(replace, "{NAME}", name);
+    replace = replaceAll(replace, "{UUID}", uuid);
+    replace = replaceAll(replace, "{LOCATION}", location);
+    replace = replaceAll(replace, "{NOTES}", notes);
+    replace = replaceAll(replace, "{QUANTITY}", quantity);
+    replace = replaceAll(replace, "{TOTAL}", total);
+    replace = replaceAll(replace, "{IN}", in_out);
+    replace = replaceAll(replace, "{FROM}", from);
+    return replace;
 }
 
 Set.prototype.isSuperset = function(subset) {
@@ -102,21 +128,14 @@ function addItemToList(id, item) {
     if(item === 0) {
         return;
     } else {
-        var ourRow = DEFAULT_TR_CONTENTS;
-        var str = "" + id;
-        var pad = "0000";
-
-        ourRow = replaceAll(ourRow, "{DISPLAYUUID}", pad.substring(0, pad.length - str.length) + str);
-        ourRow = replaceAll(ourRow, "{UUID}", id);
+        var name = "";
         if(item[4] !== "") {
-            ourRow = replaceAll(ourRow, "{NAME}", '<a target="_blank" href="' + item[4] + '">' + item[0] + '</a>');
+            name = '<a target="_blank" href="' + item[4] + '">' + item[0] + '</a>';
         } else {
-            ourRow = replaceAll(ourRow, "{NAME}", item[0]);
+            name = item[0];
         }
-        ourRow = replaceAll(ourRow, "{LOCATION}", item[3]);
-        ourRow = replaceAll(ourRow, "{NOTES}", item[2]);
-        ourRow = replaceAll(ourRow, "{QUANTITY}", 0);
-        ourRow = replaceAll(ourRow, "{TOTAL}", item[1]);
+        var ourRow = commonReplacements(DEFAULT_TR_CONTENTS, id, name, item[3], item[2], item[1], 0, "", "");
+
         $("#inventoryBody").append(ourRow);
 
         var quantityPicker = $("#quantity" + id);
@@ -184,7 +203,51 @@ function modifyCart(name, checked) {
 }
 
 function viewCart() {
+    $("#cart").modal('toggle');
+    var table = $("#cartTableBody");
+    var tableContents = "";
+    for(var i = 0; i < cart.length; i++) {
+        console.log("id: " + cart[i]);
+        var currentTr = commonReplacements(CART_TR_CONTENTS,
+            cart[i],
+            $("#name" + cart[i]).text(),
+            $("#location" + cart[i]).text(),
+            $("#notes" + cart[i]).text(),
+            $("#total" + cart[i]).text(),
+            $("#quantity" + cart[i]).val(),
+            "",
+            ""
+        );
+        console.log(currentTr);
+        tableContents += currentTr + "\n";
+    }
+    table.html(tableContents);
+}
 
+function checkOutSubmit() {
+    for(var i = 0; i < cart.length; i++) {
+        var submit = {
+            code: cart[i],
+            amount: $("#quantity" + cart[i]).val(),
+            checkout: 1,
+            user: $("#checkOutUser").val()
+        };
+        $.post("/change_quantity", submit, checkOutCallback(
+            cart[i],
+            $("#name" + cart[i]).text(),
+            $("#location" + cart[i]).text(),
+            submit["amount"]
+        ));
+    }
+    $("#checkOutUser").val("");
+}
+
+function checkOutCallback(uuid, name, location, quantity) {
+    return function(data) {
+        var alert = commonReplacements(CHECK_IN_OUT_CONTENTS, uuid, name, location, "", "", quantity, "from", "out");
+        $("#placeToPutIds").html(alert + $("#placeToPutIds").html());
+        $("#total" + uuid).text($("#total" + uuid).text() - quantity);
+    }
 }
 
 function showAddItemsModal() {
@@ -207,7 +270,7 @@ function retrieveCheckInData() {
             $("#checkInItemFinalId").text(data['uuid']);
             $("#checkInItemName").text(data['data'][0]);
             $("#checkInItemLocation").text(data['data'][3]);
-            $("#checkInItemNotes").text(data['data'][2]);
+            $("#checkInItemNotes").val(data['data'][2]);
             $("#checkInQuantity").val(1);
             $("#checkInTable").show();
         }
@@ -218,6 +281,7 @@ function checkInItem() {
     var submit = {
         code: $("#checkInItemFinalId").text(),
         amount: $("#checkInQuantity").val(),
+        notes: $("#checkInItemNotes").val(),
         checkout: 0,
         user: $("#checkInUser").val()
     };
@@ -231,14 +295,12 @@ function checkInItem() {
         $("#checkIn").modal("hide");
         $.post("/change_quantity", submit, function(data) {
             $("#checkInTable").hide();
-            var alert = CHECK_IN_OUT_CONTENTS;
-            alert = replaceAll(alert, "{UUID}", $("#checkInItemFinalId").val());
-            alert = replaceAll(alert, "{NAME}", $("#checkInItemName").val());
-            alert = replaceAll(alert, "{LOCATION}", $("#checkInItemLocation").val());
-            alert = replaceAll(alert, "{QUANTITY}", $("#checkInQuantity").val());
-            alert = replaceAll(alert, "{IN}", "in");
-            alert = replaceAll(alert, "{TO}", "to");
+            var uuid = $("#checkInItemFinalId").text();
+            var quantityAdded = $("#checkInQuantity").val();
+            var alert = commonReplacements(CHECK_IN_OUT_CONTENTS, uuid, $("#checkInItemName").text(), $("#checkInItemLocation").text(), "", "", quantityAdded, "to", "in");
             $("#placeToPutIds").html(alert + $("#placeToPutIds").html());
+            $("#total" + uuid).text($("#total" + uuid).text() - -quantityAdded);
+            $("#notes" + uuid).text($("#checkInItemNotes").val());
         });
     }
 }
@@ -263,18 +325,19 @@ function submitAddItem() {
     }
     $.post("/add", submit, addItemsCallback(submit["name"], submit["quantity"], submit["location"]));
     $("#addItem").modal("hide");
+    $("#addItemName").val("");
+    $("#currentQuantity").val(0);
+    $("#notes").val("");
+    $("#location").val("");
+    $("#buyLink").val("");
+    $("#imageLink").val("");
 }
 
 function addItemsCallback(name, quantity, location) {
     return function(data) {
         var data = JSON.parse(data);
         var placeForIds = $("#placeToPutIds");
-        var currentText = SHOW_ID_CONTENTS;
-        currentText = replaceAll(currentText, "{NAME}", name);
-        currentText = replaceAll(currentText, "{QUANTITY}", quantity);
-        currentText = replaceAll(currentText, "{LOCATION}", location);
-        var pad = "0000";
-        currentText = replaceAll(currentText, "{UUID}", pad.substring(0, pad.length - data["uuid"].length) + data["uuid"]);
+        var currentText = commonReplacements(SHOW_ID_CONTENTS, data["uuid"], name, location, "", "", quantity, "", "");
         placeForIds.html(placeForIds.html() + currentText);
         $.get("/get_info", {code: data["uuid"]}, function(data) {
             var thing = JSON.parse(data);

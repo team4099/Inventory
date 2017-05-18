@@ -60,7 +60,7 @@ def add():
     with open(ITEM_DATA, "w") as file:
         dump(data, file)
     with open(LOG_FILE, "a") as log:
-        log.write("Admin added " + str(quantity) + " of item #" + str(code) + " (" + name + ").")
+        log.write("Admin added " + str(quantity) + " of item #" + str(code) + " (" + name + ").\n")
     return dumps({"uuid": code}), 200
 
 
@@ -71,7 +71,7 @@ def remove():
     global data
     code = int(request.form.get("code"))
     with open(LOG_FILE, "a") as log:
-        log.write("Admin removed item #" + str(code) + " (" + data[code][0] + ").")
+        log.write("Admin removed item #" + str(code) + " (" + data[code][0] + ").\n")
     data[code] = None
     with open(ITEM_DATA, "w") as file:
         dump(data, file)
@@ -95,6 +95,7 @@ def change_quantity():
     code = int(request.form['code'])
     amount = int(request.form['amount'])
     checkout = int(request.form['checkout']) != 0
+    notes = request.form.get('notes', "")
     user = request.form.get('user', "")
     print("code;", code)
     print("data[code]:", data[code])
@@ -102,13 +103,15 @@ def change_quantity():
         data[code][1] -= amount
     else:
         data[code][1] += amount
+    if notes != "":
+        data[code][2] = notes
     with open(ITEM_DATA, "w") as file:
         dump(data, file)
     with open(LOG_FILE, "a") as log:
         if user is None:
-            log.write(user + " changed the quantity of item #" + str(code) + " (" + data[code][0] + ") by " + "-" * checkout + str(data[code][1]) + ".")
+            log.write(user + " changed the quantity of item #" + str(code) + " (" + data[code][0] + ") by " + "-" * checkout + str(data[code][1]) + ".\n")
         else:
-            log.write("Quantity of item #" + str(code) + " (" + data[code][0] + ") changed by " + "-" * checkout + str(data[code][1]) + ".")
+            log.write("Quantity of item #" + str(code) + " (" + data[code][0] + ") changed by " + "-" * checkout + str(data[code][1]) + ".\n")
     return "success", 200
 
 
