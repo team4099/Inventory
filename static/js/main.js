@@ -25,12 +25,12 @@ var CART_TR_CONTENTS = '<tr id="cartRow{UUID}">' +
 
 var SHOW_ID_CONTENTS = '<div class="alert alert-success">' +
     '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span> </button>' +
-    '<strong>Success!</strong> Added {QUANTITY} of {NAME} with ID {UUID} to location {LOCATION}' +
+    '<strong>Success!</strong> Added {QUANTITY} of {NAME} with ID {DISPLAYUUID} to location {LOCATION}' +
     '</div>';
 
 var CHECK_IN_OUT_CONTENTS = '<div class="alert alert-success">' +
     '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span> </button>' +
-    '<strong>Success!</strong> Checked {IN} {QUANTITY} of {NAME} with ID {UUID} {FROM} location {LOCATION}' +
+    '<strong>Success!</strong> Checked {IN} {QUANTITY} of {NAME} with ID {DISPLAYUUID} {FROM} location {LOCATION}' +
     '</div>';
 
 function escapeRegExp(str) {
@@ -111,6 +111,27 @@ $(function() {
         if($("#checkInQuantity").val() < $("#checkInQuantity").attr("min")) {
             $("#checkInQuantity").val(0);
         }
+    });
+    $('#checkInItemId').on("keypress", function(e) {
+        if (e.keyCode == 13) {
+            retrieveCheckInData();
+            return false; // prevent the button click from happening
+        }
+    });
+    $("#login-nav").submit(function() {
+        $.post("/login", {"passwd": md5($("#password").val())}, function(data) {
+            console.log(data);
+            var loginMenuItem = $("#loginMenuItem");
+            loginMenuItem.removeClass("open");
+            data = JSON.parse(data);
+            if(data["success"] == true) {
+                loginMenuItem.removeClass("dropdown");
+                loginMenuItem.html("<a>Logged in</a>");
+                $("#addItemsLi").show();
+            }
+        });
+
+        return false;
     });
 });
 
@@ -225,6 +246,7 @@ function viewCart() {
 }
 
 function checkOutSubmit() {
+    $("#cart").modal('hide');
     for(var i = 0; i < cart.length; i++) {
         var submit = {
             code: cart[i],
@@ -247,6 +269,8 @@ function checkOutCallback(uuid, name, location, quantity) {
         var alert = commonReplacements(CHECK_IN_OUT_CONTENTS, uuid, name, location, "", "", quantity, "from", "out");
         $("#placeToPutIds").html(alert + $("#placeToPutIds").html());
         $("#total" + uuid).text($("#total" + uuid).text() - quantity);
+        $("#quantity" + uuid).val(0);
+        $("#checkbox" + uuid).attr("checked", false);
     }
 }
 
@@ -347,8 +371,9 @@ function addItemsCallback(name, quantity, location) {
 }
 
 function showAddItemsError() {
-    $("#invalidItemsThing").show();
-    $("#invalidItemsThing").fadeTo(2000, 500).slideUp(500, function(){
-        $("#invalidItemsThing").hide();
+    var invalidItemsThing = $("#invalidItemsThing");
+    invalidItemsThing.show();
+    invalidItemsThing.fadeTo(2000, 500).slideUp(500, function(){
+        invalidItemsThing.hide();
     });
 }

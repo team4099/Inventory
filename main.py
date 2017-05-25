@@ -10,18 +10,24 @@ from json import load, dump, dumps, decoder
 from jellyfish import jaro_winkler
 
 app = Flask(__name__)
-Bower(app)
-Session(app)
+bower = Bower(app)
+sess = Session(app)
 
 ITEM_DATA = "items.json"
 LOG_FILE = "log.log"
 MAX_ITEMS = 10000
 
+
 @app.route("/login", methods=["POST"])
 def login():
-    passwd = request.args.get("passwd")
+    passwd = request.form.get("passwd")
+    # print("passwd:", request.args.get("passwd"))
     if passwd == "8d56e58b448bcda2cf79b94abb3451d7":
         session["admin"] = True
+    else:
+        session["admin"] = False
+    return dumps({"success": session["admin"]})
+
 
 @app.route("/search", methods=["GET"])
 def search():
@@ -44,6 +50,7 @@ def search():
 @app.route("/add", methods=["POST"])
 def add():
     if not session.get("admin", False):
+        print("non admin tried to add item")
         return
     global data
     for code, l in enumerate(data):
@@ -140,4 +147,8 @@ if __name__ == "__main__":
         except decoder.JSONDecodeError:
             data = [0]*10000
             open(ITEM_DATA, "w").close()
+    app.secret_key = b'\xfa\xb3\xecwR\xcfh\xa8\xd1\x16A\xb0A\x1e\x1d\xa0?\xfe\x88IP\xf3\x8c\xf1'
+    app.config['SESSION_TYPE'] = 'filesystem'
+    sess.init_app(app)
+
     app.run("0.0.0.0", debug=True, port=8080, threaded=True)
