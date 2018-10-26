@@ -18,6 +18,17 @@ LOG_FILE = "log.log"
 MAX_ITEMS = 10000
 
 
+def log_to_file(str_to_log):
+    with open(LOG_FILE, "a") as log:
+        log.write(str_to_log)
+
+
+def update_item_file():
+    global data
+    with open(ITEM_DATA, "w") as file:
+        dump(data, file, indent=4)
+
+
 @app.route("/login", methods=["POST"])
 def login():
     passwd = request.form.get("passwd")
@@ -64,10 +75,10 @@ def add():
     image_link = request.form.get("image_link", "")
     data[code] = [name, quantity, notes, location, purchase_link, image_link]
     print(data[code])
-    with open(ITEM_DATA, "w") as file:
-        dump(data, file)
-    with open(LOG_FILE, "a") as log:
-        log.write("Admin added " + str(quantity) + " of item #" + str(code) + " (" + name + ").\n")
+
+    update_item_file()
+
+    log_to_file("Admin added " + str(quantity) + " of item #" + str(code) + " (" + name + ").\n")
     return dumps({"uuid": code}), 200
 
 
@@ -77,11 +88,11 @@ def remove():
         return
     global data
     code = int(request.form.get("code"))
-    with open(LOG_FILE, "a") as log:
-        log.write("Admin removed item #" + str(code) + " (" + data[code][0] + ").\n")
+    log_to_file("Admin removed item #" + str(code) + " (" + data[code][0] + ").\n")
     data[code] = None
-    with open(ITEM_DATA, "w") as file:
-        dump(data, file)
+
+    update_item_file()
+
     return "success", 200
 
 
@@ -112,13 +123,13 @@ def change_quantity():
         data[code][1] += amount
     if notes != "":
         data[code][2] = notes
-    with open(ITEM_DATA, "w") as file:
-        dump(data, file)
-    with open(LOG_FILE, "a") as log:
-        if user is None:
-            log.write(user + " changed the quantity of item #" + str(code) + " (" + data[code][0] + ") by " + "-" * checkout + str(data[code][1]) + ".\n")
-        else:
-            log.write("Quantity of item #" + str(code) + " (" + data[code][0] + ") changed by " + "-" * checkout + str(data[code][1]) + ".\n")
+
+    update_item_file()
+
+    if user is None:
+        log_to_file(user + " changed the quantity of item #" + str(code) + " (" + data[code][0] + ") by " + "-" * checkout + str(data[code][1]) + ".\n")
+    else:
+        log_to_file("Quantity of item #" + str(code) + " (" + data[code][0] + ") changed by " + "-" * checkout + str(data[code][1]) + ".\n")
     return "success", 200
 
 
